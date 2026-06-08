@@ -1,10 +1,10 @@
+# Copyright(C) Enizouu (enizouu@gmail.com) 2026
 import socket
 import json
 import tkinter
 import os
 
 User = {}
-
 Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
@@ -16,10 +16,20 @@ except ConnectionRefusedError:
 Folder = os.path.dirname(os.path.abspath(__file__))
 ApiKeysFile = os.path.join(Folder, "ApiKeys.json")
 ApiKeys = {}
+SignedIn = False
 
 if os.path.isfile(ApiKeysFile):
     with open(ApiKeysFile, "r") as f:
-        ApiKeys = json.loads(f)
+        ApiKeys = json.load(f)
+        for i in range(len(ApiKeys["apikeys"])):
+            Socket.sendall(json.dumps({"type": "login", "login_type": "apikey", "username": ApiKeys["apikeys"][i]["username"], "apikey": ApiKeys["apikeys"][i]["apikey"]}).encode("utf-8"))
+
+            Data = json.loads(Socket.recv(1024))
+
+            if Data["type"] == "success":
+                User = Data["user"]
+                SignedIn = True
+
 else:
     with open(ApiKeysFile, "w") as f:
         json.dump({"apikeys": []}, f)
@@ -74,7 +84,7 @@ def RegisterButtonFunction():
         ErrorWindow("Password can't be empty.")
 
 def LoginButtonFunction():
-    Socket.sendall(json.dumps({"type": "login", "username": LoginUsernameEntry.get(), "password": LoginPasswordEntry.get()}).encode("utf-8"))
+    Socket.sendall(json.dumps({"type": "login", "login_type": "password", "username": LoginUsernameEntry.get(), "password": LoginPasswordEntry.get()}).encode("utf-8"))
     Data = json.loads(Socket.recv(1024))
 
     global User
@@ -82,14 +92,9 @@ def LoginButtonFunction():
     if Data["type"] == "success":
         User = Data["user"]
         print(f"Welcome {User["username"]}, the amount on your account is {User["amount"]}.")
-        LoginFrame.pack_forget()
-        MainFrame.pack(fill="both", expand=True)
+        LoginFunction()
 
-        if os.path.isfile(ApiKeysFile):
-            ApiKeys["apikeys"].append(json.dumps(f"{User["apikey"]}"))
-        else:
-            with open(ApiKeysFile, "w") as f:
-                json.dump({"apikeys": []}, f)
+        ApiKeys["apikeys"].append({"username": User["username"], "apikey": User["apikey"]})
     elif Data["type"] == "error":
         ErrorWindow(Data["error"])
 
@@ -105,18 +110,37 @@ def ShowProfileFrame():
         ProfileFrame.place_forget()
 
 def SignOutFunction():
-    Socket.sendall(json.dumps({"type": "signout", "username": User["username"], "apikey": ApiKey}).encode("utf-8"))
+    ApiKey = ""
+    for i in ApiKeys["apikeys"]:
+            if i["username"] == User["username"]:
+                ApiKey = i
+
+    Socket.sendall(json.dumps({"type": "signout", "username": User["username"], "apikey": ApiKey["apikey"]}).encode("utf-8"))
     Data = json.loads(Socket.recv(1024))
 
     if Data["type"] == "success":
         MainFrame.pack_forget()
         SignInFrame.pack(fill="both", expand=True)
+        ApiKeys["apikeys"].remove(ApiKey)
+
     elif Data["type"] == "error":
         ErrorWindow(Data["error"])
+
+def ExitFunction():
+    with open(ApiKeysFile, "w") as f:
+        json.dump(ApiKeys, f)
+    Socket.close()
+    exit()
+
+def LoginFunction():
+    SignInFrame.pack_forget()
+    LoginFrame.pack_forget()
+    MainFrame.pack(fill="both", expand=True)
 
 Window = tkinter.Tk()
 Window.title("Eni's Banking")
 Window.geometry("1440x810")
+Window.protocol("WM_DELETE_WINDOW", ExitFunction)
 
 SignInFrame = tkinter.Frame(Window)
 SignInFrame.pack(fill="both", expand=True)
@@ -219,7 +243,10 @@ ProfileFrame.grid_rowconfigure(1, weight=1)
 ProfileFrame.grid_rowconfigure(2, weight=1)
 ProfileFrame.grid_columnconfigure(0, weight=1)
 
-SignOutButton = tkinter.Button(ProfileFrame, text="Sign Out", command=lambda: print(User))
+SignOutButton = tkinter.Button(ProfileFrame, text="Sign Out", command=SignOutFunction)
 SignOutButton.grid(row=2, column=0, sticky="nsew")
+
+if SignedIn == True:
+    LoginFunction()
 
 Window.mainloop()
