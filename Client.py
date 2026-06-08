@@ -246,6 +246,7 @@ ProfileFrame.grid_columnconfigure(0, weight=1)
 SignOutButton = tkinter.Button(ProfileFrame, text="Sign Out", command=SignOutFunction)
 SignOutButton.grid(row=2, column=0, sticky="nsew")
 
+
 if SignedIn == True:
     LoginFunction()
 
