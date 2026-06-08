@@ -29,6 +29,8 @@ if os.path.isfile(ApiKeysFile):
             if Data["type"] == "success":
                 User = Data["user"]
                 SignedIn = True
+            else:
+                ApiKeys["apikeys"].remove(ApiKeys["apikeys"][i])
 
 else:
     with open(ApiKeysFile, "w") as f:
@@ -245,7 +247,6 @@ ProfileFrame.grid_columnconfigure(0, weight=1)
 
 SignOutButton = tkinter.Button(ProfileFrame, text="Sign Out", command=SignOutFunction)
 SignOutButton.grid(row=2, column=0, sticky="nsew")
-
 
 if SignedIn == True:
     LoginFunction()

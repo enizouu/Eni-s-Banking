@@ -46,24 +46,45 @@ def User(Conn, Addr):
                     Conn.sendall(json.dumps({"type": "error", "error": "Username already exists."}).encode("utf-8"))
 
             elif Data["type"] == "login":
-                Exists = False
-                User = {}
-                for i in Users["users"]:
-                    if i["username"] == Data["username"]:
-                        Exists = True
-                        User = i
-                        break
+                if Data["login_type"] == "password":
+                    Exists = False
+                    User = {}
+                    for i in Users["users"]:
+                        if i["username"] == Data["username"]:
+                            Exists = True
+                            User = i
+                            break
 
-                if Exists == True:
-                    if Data["password"] == User["password"]:
-                        ApiKey = secrets.token_urlsafe(16)
-                        print(ApiKey)
-                        User["apikey"].append(ApiKey)
-                        Conn.sendall(json.dumps({"type": "success", "user": {"username": User["username"], "password": User["password"], "amount": User["amount"], "apikey": ApiKey}}).encode("utf-8"))
+                    if Exists == True:
+                        if Data["password"] == User["password"]:
+                            ApiKey = secrets.token_urlsafe(16)
+                            User["apikey"].append(ApiKey)
+                            Conn.sendall(json.dumps({"type": "success", "user": {"username": User["username"], "amount": User["amount"], "apikey": ApiKey}}).encode("utf-8"))
+                        else:
+                            Conn.sendall(json.dumps({"type": "error", "error": "Wrong password, please try again."}).encode("utf-8"))
                     else:
-                        Conn.sendall(json.dumps({"type": "error", "error": "Wrong password, please try again."}).encode("utf-8"))
-                else:
-                    Conn.sendall(json.dumps({"type": "error", "error": "User doesn't exist."}).encode("utf-8"))
+                        Conn.sendall(json.dumps({"type": "error", "error": "User doesn't exist."}).encode("utf-8"))
+
+                elif Data["login_type"] == "apikey":
+                    Exists = False
+                    User = {}
+                    for i in Users["users"]:
+                        if i["username"] == Data["username"]:
+                            User = i
+                            Exists = True
+                            break
+                    ApiKeyExists = False
+                    for i in User["apikey"]:
+                        if i == Data["apikey"]:
+                            ApiKeyExists = True
+
+                    if Exists == True:
+                        if ApiKeyExists == True:
+                            Conn.sendall(json.dumps({"type": "success", "user": {"username": User["username"], "amount": User["amount"]}}).encode("utf-8"))
+                        else:
+                            Conn.sendall(json.dumps({"type": "error", "error": "API Key isn't working, please login."}).encode("utf-8"))
+                    else:
+                        Conn.sendall(json.dumps({"type": "error", "error": "User doesn't exist."}).encode("utf-8"))            
 
             elif Data["type"] == "signout":
                 Exists = False
@@ -77,7 +98,7 @@ def User(Conn, Addr):
                 if Exists == True:
                     Conn.sendall(json.dumps({"type": "success"}).encode("utf-8"))
                     ApiKey = Data["apikey"]
-                    User["apikey"].pop(ApiKey)
+                    User["apikey"].remove(ApiKey)
                 else:
                     Conn.sendall(json.dumps({"type": "error", "error": "User doesn't exist."}).encode("utf-8"))
             
