@@ -8,14 +8,14 @@ User = {}
 Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    Socket.connect(("0.0.0.0", 2330))
+    Socket.connect(("127.0.0.1", 2330))
 except ConnectionRefusedError:
     print("The server isn't reachable, please try again later.")
     exit()
 
 Folder = os.path.dirname(os.path.abspath(__file__))
 ApiKeysFile = os.path.join(Folder, "ApiKeys.json")
-ApiKeys = {}
+ApiKeys = {"apikeys": []}
 SignedIn = False
 
 if os.path.isfile(ApiKeysFile):
@@ -49,6 +49,19 @@ def ErrorWindow(Error):
     OkButton = tkinter.Button(ErrorTopLevel, text="OK", command=lambda:ErrorTopLevel.destroy())
     OkButton.grid(row=1, column=0, sticky="nsew")
 
+def InformationWindow(Information):
+    InformationTopLevel = tkinter.Toplevel()
+    InformationTopLevel.geometry(f"{len(Information)*10}x100")
+    InformationTopLevel.grid_rowconfigure(0, weight=3)
+    InformationTopLevel.grid_rowconfigure(1, weight=1)
+    InformationTopLevel.grid_columnconfigure(0, weight=1)
+
+    InformationMessageLabel = tkinter.Label(InformationTopLevel, text=Information)
+    InformationMessageLabel.grid(row=0, column=0, sticky="nsew")
+
+    OkButton = tkinter.Button(InformationTopLevel, text="OK", command=lambda:InformationTopLevel.destroy())
+    OkButton.grid(row=1, column=0, sticky="nsew")
+
 def RegisterFrameButtonFunction():
     SignInFrame.pack_forget()
     RegisterFrame.pack(fill="both", expand=True)
@@ -70,7 +83,7 @@ def RegisterButtonFunction():
         Data = json.loads(Socket.recv(1024))
 
         if Data["type"] == "success":
-            ErrorWindow(f"Your account is successfully registered, please login now.")
+            InformationWindow(f"Your account is successfully registered, please login now.")
             RegisterFrame.pack_forget()
             SignInFrame.pack(fill="both", expand=True)
         elif Data["type"] == "error":
