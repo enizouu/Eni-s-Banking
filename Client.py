@@ -2,6 +2,7 @@
 import socket
 import json
 import tkinter
+import tkinter.font
 import os
 
 User = {}
@@ -254,12 +255,25 @@ ProfileButton.grid(row=0, column=4, sticky="nsew")
 
 ProfileFrame = tkinter.Frame(MainFrame, bd=5, relief="ridge")
 ProfileFrame.grid_rowconfigure(0, weight=1)
-ProfileFrame.grid_rowconfigure(1, weight=1)
+ProfileFrame.grid_rowconfigure(1, weight=2)
 ProfileFrame.grid_rowconfigure(2, weight=1)
+ProfileFrame.grid_rowconfigure(3, weight=1)
 ProfileFrame.grid_columnconfigure(0, weight=1)
 
+AccountFrame = tkinter.Frame(ProfileFrame, bd=5, relief="ridge")
+AccountFrame.grid(row=0, column=0, sticky="nsew")
+
+UserLabel = tkinter.Label(AccountFrame, text=f"Welcome {User["username"]}", font=tkinter.font.Font(size=30))
+UserLabel.grid(row=0, column=0, sticky="nw")
+
+AmountLabel = tkinter.Label(AccountFrame, text=f"The amount left on your account is {User["amount"]}")
+AmountLabel.grid(row=1, column=0, sticky="nw")
+
+SettingsButton = tkinter.Button(ProfileFrame, text="Settings", command=None)
+SettingsButton.grid(row=2, column=0, sticky="nsew")
+
 SignOutButton = tkinter.Button(ProfileFrame, text="Sign Out", command=SignOutFunction)
-SignOutButton.grid(row=2, column=0, sticky="nsew")
+SignOutButton.grid(row=3, column=0, sticky="nsew")
 
 if SignedIn == True:
     LoginFunction()
